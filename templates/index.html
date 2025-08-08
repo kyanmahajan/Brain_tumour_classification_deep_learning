@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Brain Tumor Classifier</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #eef2f3, #dfe6e9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 400px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #2d3436;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-label {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #0984e3;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 15px;
+      transition: background 0.3s ease;
+    }
+
+    .file-label:hover {
+      background-color: #74b9ff;
+    }
+
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #2d3436;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 15px;
+      box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .loading {
+      color: #636e72;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🧠 Brain Tumor Classifier</h1>
+
+    <label for="imageInput" class="file-label">📁 Choose an Image</label>
+    <input type="file" id="imageInput" onchange="submitImage(event)" accept="image/*">
+
+    <div id="result"></div>
+    <img id="camImage" src="" alt="CAM Visualization" style="display:none;"/>
+  </div>
+
+  <script>
+    async function submitImage(e) {
+      e.preventDefault();
+      const input = document.getElementById('imageInput');
+      const file = input.files[0];
+
+      if (!file) {
+        alert("Please select an image.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const resultEl = document.getElementById('result');
+      resultEl.innerText = '🔍 Predicting...';
+      resultEl.classList.add('loading');
+      document.getElementById('camImage').style.display = 'none';
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        resultEl.classList.remove('loading');
+
+        if (data.error) {
+          resultEl.innerText = `❌ Error: ${data.error}`;
+        } else {
+          resultEl.innerText = `✅ Prediction: ${data.prediction}`;
+          const camImg = document.getElementById('camImage');
+          camImg.src = data.cam_image_url;
+          camImg.style.display = 'block';
+        }
+
+      } catch (err) {
+        resultEl.classList.remove('loading');
+        resultEl.innerText = '⚠️ Failed to fetch prediction.';
+      }
+    }
+  </script>
+
+</body>
+</html>
